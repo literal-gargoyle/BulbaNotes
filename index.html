@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BulbaNotes</title>
+  <style>
+    /* CSS styles here */
+    body {
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f9f9f9;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      
+    }
+
+    .header-icon img {
+      width: auto;
+      height: 40px;
+      margin-right: 5%;
+      padding: 20%;
+    }
+
+    .reset-button {
+      cursor: pointer;
+      width: 20%;
+      height: auto;
+      margin-right: -10%;
+    }
+
+    .new-note-button {
+      margin-left: 10%;
+      cursor: pointer;
+      width: 40%;
+      height: auto;
+    }
+
+    .sticky-note {
+      position: absolute;
+      width: 300px;
+      height: 200px;
+      padding-top: 20px;
+      background-color: #ffd699;
+      border: 1px solid #d1a04d;
+      border-radius: 10px;
+      box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1);
+      scrollbar-width: none;
+      style="resize: none"
+    }
+
+    textarea {
+      width: 80%;
+      height: 90%;
+      border: none;
+      background-color: transparent;
+      resize: none;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 16px;
+      padding-left: 30px;
+      outline: none;
+      
+    }
+
+    .reset-container,
+    .new-note-container {
+      display: flex;
+      align-items: center;
+    }
+    
+
+  </style>
+</head>
+<body>
+  
+
+  <div class="header">
+    <div class="header-icon">
+      <!-- Custom Icon -->
+      <img src="Icon.png" alt="Bulbasaur Icon" title="Bulbasaur :D">
+    </div>
+    <div class="reset-container">
+      <div class="new-note-container">
+        <img src="add_circle_FILL0_wght400_GRAD0_opsz48.svg" class="new-note-button" onclick="addNewNote()" title="Add a new note">
+        </img>
+      </div>
+      <img src="delete_FILL0_wght400_GRAD0_opsz48.svg" class="reset-button" onclick="resetStickyNotes()" title="Reset">
+        
+      </img>
+    </div>
+  </div>
+  <textarea id="note-content" placeholder="Type your note here..." maxlength="75"></textarea>
+  <script>
+    const noteContent = document.getElementById('note-content');
+    let isDragging = false;
+    let activeNote = null;
+    let offsetX, offsetY;
+
+    let savedIdeas = JSON.parse(localStorage.getItem('ideas')) || [];
+
+    const saveIdeasToLocalStorage = () => {
+      localStorage.setItem('ideas', JSON.stringify(savedIdeas));
+
+    };
+  
+
+  document.addEventListener('keydown', (event) => {
+    if (isDragging && activeNote) {
+      if (event.key === '1') {
+        changeStickyNoteColor(activeNote.id, '#ffd699');
+      } else if (event.key === '2') {
+        changeStickyNoteColor(activeNote.id, '#ffa930');
+      } else if (event.key === '3') {
+        changeStickyNoteColor(activeNote.id, '#ff32b2');
+      } else if (event.key === '4') {
+        changeStickyNoteColor(activeNote.id, '#a9edf1');
+      } else if (event.key === '5') {
+        changeStickyNoteColor(activeNote.id, '#74ed4b ');
+      }
+    }
+  });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Delete' && isDragging && activeNote) {
+        activeNote.remove();
+      }
+    });
+
+  function changeStickyNoteColor(noteId, color) {
+    const stickyNote = document.getElementById(noteId);
+    activeNote.style.backgroundColor = color;
+    
+  const availableColors = ['#ffd699', '#96d1fb', '#a2ffa1', '#fbb6e1', '#fad68f'];
+
+  function getRandomColor() {
+    return availableColors[Math.floor(Math.random() * availableColors.length)];
+  }
+  }
+
+  document.getElementById('note-content').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (this.value.trim() !== '') {
+        addNewNote();
+      }
+    }
+  });
+    const getRandomPosition = () => {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const noteWidth = 300;
+      const noteHeight = 400;
+
+      const randomX = Math.floor(Math.random() * (screenWidth - noteWidth));
+      const randomY = Math.floor(Math.random() * (screenHeight - noteHeight));
+
+      return { x: randomX, y: randomY };
+    };
+
+    const createNote = (content, x, y) => {
+      const newNote = document.createElement('div');
+      newNote.className = 'sticky-note';
+      newNote.innerHTML = `<textarea>${content}</textarea>`;
+      document.body.appendChild(newNote);
+
+      newNote.style.left = x + 'px';
+      newNote.style.top = y + 'px';
+
+      newNote.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        activeNote = newNote;
+        offsetX = e.clientX - activeNote.getBoundingClientRect().left;
+        offsetY = e.clientY - activeNote.getBoundingClientRect().top;
+      });
+    };
+
+    const resetStickyNotes = () => {
+      document.querySelectorAll('.sticky-note').forEach((note) => {
+        note.remove();
+      });
+      savedIdeas.length = 0;
+      saveIdeasToLocalStorage();
+    };
+
+    const addNewNote = () => {
+      const content = noteContent.value.trim();
+      if (content !== '') {
+        savedIdeas.push(content);
+        const position = getRandomPosition();
+        createNote(content, position.x, position.y);
+        saveIdeasToLocalStorage();
+        noteContent.value = '';
+        
+      }
+    };
+
+    savedIdeas.forEach((idea) => createNote(idea, 50, 50));
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging || !activeNote) return;
+      const x = e.clientX - offsetX;
+      const y = e.clientY - offsetY;
+      activeNote.style.left = `${x}px`;
+      activeNote.style.top = `${y}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      activeNote = null;
+    });
+  </script>
+</body>
+</html>
